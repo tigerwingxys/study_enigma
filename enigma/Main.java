@@ -157,7 +157,7 @@ public final class Main {
             String permute = scanner.nextLine();
             Permutation perm = new Permutation(permute, _alphabet);
 
-            Rotor rotor = null;
+            Rotor rotor;
             if( type.charAt(0) == Rotor.MOVING ){
                 rotor = new MovingRotor(name, perm, notches);
             }else if(type.charAt(0) == Rotor.NOMOVING ){
@@ -172,12 +172,6 @@ public final class Main {
         } catch (NoSuchElementException excp) {
             throw error("bad rotor description");
         }
-    }
-
-    /** Set M according to the specification given on SETTINGS,
-     *  which must have the format specified in the assignment. */
-    private void setUp(Machine M, String settings) {
-        M.setupMachine(settings);
     }
 
     /** Print MSG in groups of five (except that the last group may

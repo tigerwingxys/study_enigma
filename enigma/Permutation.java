@@ -1,7 +1,5 @@
 package enigma;
 
-import static enigma.EnigmaException.*;
-
 /** Represents a permutation of a range of integers starting at 0 corresponding
  *  to the characters of an alphabet.
  *  @author Jerry
@@ -22,8 +20,8 @@ class Permutation {
 
         /* split cycles into a list of small character cycle */
         String[] cycle = cycles.split("[\\t ()]");
-        for(int i = 0 ; i < cycle.length; i++){
-            addCycle(cycle[i]);
+        for (String s : cycle) {
+            addCycle(s);
         }
     }
 

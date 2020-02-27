@@ -1,7 +1,5 @@
 package enigma;
 
-import static enigma.EnigmaException.*;
-
 /** Class that represents a reflector in the enigma.
  *  @author Jerry
  */
@@ -11,6 +9,7 @@ class Reflector extends FixedRotor {
      * is PERM. */
     Reflector(String name, Permutation perm) {
         super(name, perm);
+
         setType(REFLECTOR);
     }
 }

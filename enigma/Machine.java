@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Collection;
 
-import static enigma.EnigmaException.*;
-
 /** Class that represents a complete enigma machine.
  *  @author Jerry
  */

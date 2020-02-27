@@ -1,7 +1,5 @@
 package enigma;
 
-import static enigma.EnigmaException.*;
-
 /** Superclass that represents a rotor in the enigma machine.
  *  @author Jerry
  */
@@ -54,11 +52,6 @@ class Rotor {
         return _position;
     }
 
-    /** Get current position linked character */
-    char getPositionChar(){
-        return alphabet().toChar(_position);
-    }
-
     /** Set setting() to POSN.  */
     void set(int posn) {
         _position = _permutation.wrap(posn);
@@ -104,8 +97,8 @@ class Rotor {
         /* check if every char in notches in alphabet */
         for (char c : notches.toCharArray()) {
             if(!alphabet().contains(c)){
-                throw new EnigmaException(String.format("Rotor notch[%c] is not" +
-                        " in alphabet",c));
+                throw new EnigmaException(String.format("Rotor notch[%c] is" +
+                        " not in alphabet",c));
             }
         }
         _notches = notches;
