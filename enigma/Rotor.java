@@ -217,6 +217,11 @@ class Rotor {
         }
     }
 
+    /** return my type */
+    char type(){
+        return _type;
+    }
+
     @Override
     public String toString() {
         return "Rotor " + _name;

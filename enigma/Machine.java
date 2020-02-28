@@ -21,12 +21,17 @@ class Machine {
 
         _numRotors = numRotors;
         _numPawls = pawls;
+        _summary = String.format("Enigma size[%d], numRotors[%d], " +
+                        "numPawls[%d], all supported rotors:",
+                _alphabet.size(), numRotors(), numPawls());
         _allRotors = new HashMap<>();
         _plugboard = null;
         _atWorkRotors = new ArrayList<>();
         if(allRotors != null) {
             for (Rotor rotor : allRotors) {
                 _allRotors.put(rotor.name(), rotor);
+                String s = String.format("%s[%s],", rotor.name(),rotor.type());
+                _summary += s;
             }
         }
     }
@@ -83,6 +88,20 @@ class Machine {
         insertRotors(sNames);
         Permutation perm = new Permutation(sPlugboard, _alphabet);
         setPlugboard(perm);
+    }
+
+    /** Returns the config string */
+    public String configString(){
+        return _configString;
+    }
+
+    @Override
+    public String toString(){
+        if( _atWorkRotors.size() > 0 ){
+            return _summary + " ready to work.";
+        }else {
+            return _summary + " not ready.";
+        }
     }
 
     /** Return the number of rotor slots I have. */
@@ -260,6 +279,9 @@ class Machine {
 
     /** This machine's config string, such as "* B Beta I II III AAAR"*/
     private String _configString;
+
+    /** My summary information */
+    private String _summary;
 
     /** The ringPositions of rotors at work (except reflector) */
     private String _ringPositions;
