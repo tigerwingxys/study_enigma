@@ -1,5 +1,6 @@
 package enigma;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /** Utility definitions for use in unit tests.
@@ -124,6 +125,36 @@ class TestUtils {
         NAVALZ_MAP.put("VIII", "WGLRIUMYPDCKTQEASBNFXOJVZH");
         NAVALZ_MAP.put("Beta", "TMFZKWDOJYXQCRNESUBLAHGVIP");
         NAVALZ_MAP.put("Gamma", "EGTPLBOVFSINCUJZDXMRQAYWHK");
+    }
+
+    /** The naval rotors default config */
+    static final ArrayList<String> NAVALDEFAULT = new ArrayList<>();
+    static {
+        NAVALDEFAULT.add("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        NAVALDEFAULT.add(" 5 3");
+        NAVALDEFAULT.add(" I MQ      (AELTPHQXRU) (BKNW) (CMOY) (DFG) (IV) (JZ) (S)");
+        NAVALDEFAULT.add(" II ME     (FIXVYOMW) (CDKLHUP) (ESZ) (BJ) (GR) (NT) (A) (Q)");
+        NAVALDEFAULT.add(" III MV    (ABDHPEJT) (CFLVMZOYQIRWUKXSG) (N)");
+        NAVALDEFAULT.add(" IV MJ     (AEPLIYWCOXMRFZBSTGJQNH) (DV) (KU)");
+        NAVALDEFAULT.add(" V MZ      (AVOLDRWFIUQ)(BZKSMNHYC) (EGTJPX)");
+        NAVALDEFAULT.add(" VI MZM    (AJQDVLEOZWIYTS) (CGMNHFUX) (BPRK) ");
+        NAVALDEFAULT.add(" VII MZM   (ANOUPFRIMBZTLWKSVEGCJYDHXQ) ");
+        NAVALDEFAULT.add(" VIII MZM  (AFLSETWUNDHOZVICQ) (BKJ) (GXY) (MPR)");
+        NAVALDEFAULT.add(" Beta N    (ALBEVFCYODJWUGNMQTZSKPR) (HIX)");
+        NAVALDEFAULT.add(" Gamma N   (AFNIRLBSQWVXGUZDKMTPCOYJHE)");
+        NAVALDEFAULT.add(" B R       (AE) (BN) (CK) (DQ) (FU) (GY) (HW) (IJ) (LO) (MP) (RX) (SZ) (TV)");
+        NAVALDEFAULT.add(" C R       (AR) (BD) (CO) (EJ) (FN) (GT) (HK) (IV) (LM) (PW) (QZ) (SX) (UY)");
+    }
+    /** The simple config */
+    static final ArrayList<String> SIMPLE = new ArrayList<>();
+    static {
+        SIMPLE.add("ABC");
+        SIMPLE.add(" 5 3");
+        SIMPLE.add(" I MC      (ABC)");
+        SIMPLE.add(" II MC      (ABC)");
+        SIMPLE.add(" III MC      (ABC)");
+        SIMPLE.add(" Beta N    (ABC)");
+        SIMPLE.add(" B R       (AB)");
     }
 
 }

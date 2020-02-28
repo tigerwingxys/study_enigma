@@ -1,5 +1,7 @@
 package enigma;
 
+import java.util.Scanner;
+
 /** Superclass that represents a rotor in the enigma machine.
  *  @author Jerry
  */
@@ -15,6 +17,33 @@ class Rotor {
         _leftRotor = null;
         _position = 0;
         _ringOffset = 0;
+        _hasAPawl = false;
+    }
+
+    static public Rotor makeARotor(Alphabet alphabet, String config){
+        Scanner scanner = new Scanner(config);
+
+        String name = scanner.next();
+        String type = scanner.next();
+        String notches = "";
+        if( type.length() > 1){
+            notches = type.substring(1);
+        }
+        String permute = scanner.nextLine();
+        Permutation perm = new Permutation(permute, alphabet);
+
+        Rotor rotor;
+        if( type.charAt(0) == Rotor.MOVING ){
+            rotor = new MovingRotor(name, perm, notches);
+        }else if(type.charAt(0) == Rotor.NOMOVING ){
+            rotor = new FixedRotor(name, perm);
+        }else if( type.charAt(0) == Rotor.REFLECTOR ){
+            rotor = new Reflector(name, perm);
+        }else {
+            throw new EnigmaException(String.format("type[%c] is " +
+                    "not correct.", type.charAt(0)));
+        }
+        return rotor;
     }
 
     /** Return my name. */
@@ -54,11 +83,17 @@ class Rotor {
 
     /** Set setting() to POSN.  */
     void set(int posn) {
+        if(reflecting()){
+            return;
+        }
         _position = _permutation.wrap(posn);
     }
 
     /** Set setting() to character CPOSN. */
     void set(char cposn) {
+        if(reflecting()){
+            return;
+        }
         if(permutation().alphabet().contains(cposn)) {
             _position = _permutation.alphabet().toInt(cposn);
         }else {
@@ -68,16 +103,35 @@ class Rotor {
 
     /** Set ringing setting to NRINGPOSITION */
     void setRingPosition(int nringPosition){
+        if(reflecting()){
+            return;
+        }
         _ringOffset = _permutation.wrap(nringPosition);
     }
 
     /** Set ringing setting to character CRINGPOSITION */
     void setRingPosition(char cringPostion){
+        if(reflecting()){
+            return;
+        }
         if(permutation().alphabet().contains(cringPostion)) {
             _ringOffset = _permutation.alphabet().toInt(cringPostion);
         }else {
             _ringOffset = 0;
         }
+    }
+
+    /** Set this rotor a pawl */
+    void setPawl(){
+        if(!rotates()){
+            return;
+        }
+        _hasAPawl = true;
+    }
+
+    /** Returns this rotor has a pawl*/
+    boolean hasAPawl(){
+        return _hasAPawl;
     }
 
     /** Set rotor's type to CTYPE */
@@ -112,21 +166,21 @@ class Rotor {
     /** Return the conversion of P (an integer in the range 0..size()-1)
      *  according to my permutation. */
     int convertForward(int p) {
-        int offset = _position - _ringOffset;
+        int offset = _position + _ringOffset;
         return _permutation.wrap(_permutation.permute(p + offset) - offset);
     }
 
     /** Return the conversion of E (an integer in the range 0..size()-1)
      *  according to the inverse of my permutation. */
     int convertBackward(int e) {
-        int offset = _position - _ringOffset;
+        int offset = _position + _ringOffset;
         return _permutation.wrap(_permutation.invert(e + offset) - offset);
     }
 
     /** Returns true iff I am positioned to allow the rotor to my left
      *  to advance. */
     boolean atNotch() {
-        int r = _permutation.wrap(_position-_ringOffset);
+        int r = _permutation.wrap(_position + _ringOffset);
         char c =_permutation.alphabet().toChar(r);
 
         /* check the current position linked character in the notches */
@@ -139,16 +193,27 @@ class Rotor {
             return;
         }
 
-        /* if this rotor at notch and has a left rotor, the left rotor
+        boolean leftHadAdvance = false;
+        /* if this rotor at notch and has a left moving rotor, the left rotor
         advance a step */
         if(atNotch() && _leftRotor != null){
             _leftRotor.advance();
+            leftHadAdvance = true;
         }
 
         /* current position advance a step */
         _position++;
         if(_position == size()){
             _position = 0;
+        }
+
+        /* if this rotor is not at notch, and the left rotor is at notch
+           (not just advance here), and the left of the left rotor has a
+           pawl, double stepping */
+        if(!atNotch() && !leftHadAdvance && _leftRotor != null
+                && _leftRotor.atNotch() && _leftRotor._leftRotor.hasAPawl())
+        {
+            _leftRotor.advance();
         }
     }
 
@@ -179,6 +244,9 @@ class Rotor {
 
     /** My notches */
     private String _notches;
+
+    /** My pawl */
+    private boolean _hasAPawl;
 
     /** My left MOVING rotor of this rotor */
     private Rotor _leftRotor;

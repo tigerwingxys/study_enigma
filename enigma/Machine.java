@@ -1,8 +1,10 @@
 package enigma;
 
+import javax.crypto.Mac;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Collection;
+import java.util.Scanner;
 
 /** Class that represents a complete enigma machine.
  *  @author Jerry
@@ -21,14 +23,52 @@ class Machine {
         _numPawls = pawls;
         _allRotors = new HashMap<>();
         _plugboard = null;
-        _arrayRotors = new ArrayList<>();
-        for (Rotor rotor: allRotors) {
-           _allRotors.put(rotor.name(),rotor) ;
+        _atWorkRotors = new ArrayList<>();
+        if(allRotors != null) {
+            for (Rotor rotor : allRotors) {
+                _allRotors.put(rotor.name(), rotor);
+            }
         }
     }
 
-    /** Setup the machine to correct rotors according CONFIGSTRING, positions,
-     * ringpositions(Ringstellung), plugboard */
+    /** Returns a Machine according to default CONFIGLINES to initialize.
+     *  @param configLines is a list of string lines, such as:
+     *    list[0]: ABCDEFGHIJKLMNOPQRSTUVWXYZ
+     *    list[1]: 5 3
+     *    list[2]: I MQ      (AELTPHQXRU) (BKNW) (CMOY) (DFG) (IV) (JZ) (S)
+     *    list[n]: ... ...
+     *  from 2-n, every line is complete config to initialize a rotor. */
+    public static Machine makeAMachine(ArrayList<String> configLines){
+        /* initialize alphabet */
+        Alphabet alphabet = new Alphabet(configLines.get(0));
+
+        /* initialize the number of rotors and pawls */
+        Scanner scanner = new Scanner(configLines.get(1));
+        int numRotors = scanner.nextInt();
+        int numPawls = scanner.nextInt();
+        if(numPawls > numRotors - 1){
+            throw new EnigmaException(String.format("numPawls[%d] is too" +
+                    " big than numRotors[%d]", numPawls, numRotors));
+        }
+
+        /* initialize all supported rotors */
+        ArrayList<Rotor> allRotors = new ArrayList<>();
+        for(int i = 2; i < configLines.size(); i++){
+            allRotors.add(Rotor.makeARotor(alphabet, configLines.get(i)));
+        }
+
+        return new Machine(alphabet, numRotors, numPawls, allRotors);
+    }
+
+    /** Setup the machine to correct rotors at work according CONFIGSTRING,
+     *  positions, ringpositions(Ringstellung), plugboard.
+     *  @param configString:* B Beta I II III AAAR BDFB (AQ) (EP)
+     *    * indicate this is a config line
+     *    B indicate the reflector
+     *    Beta - III, is the rotors at work
+     *    AAAR indicate the Beta - III's position
+     *    BDFB indicate the Beta - III's Ringstellung settings
+     *    (AQ) (EP) ..., the plugboard*/
     void setupMachine(String configString){
         _configString = configString.trim();
 
@@ -55,6 +95,20 @@ class Machine {
         return _numPawls;
     }
 
+    /** Returns the current state of rotors position (except reflector) */
+    String currentState(){
+        StringBuilder result = new StringBuilder();
+        for (int i = 1; i < numRotors(); i++) {
+            result.append(_alphabet.toChar(_atWorkRotors.get(i).setting()));
+        }
+        return result.toString();
+    }
+
+    /** Returns the current ring positions of rotors (except reflector) */
+    String currentRingPositions(){
+        return _ringPositions;
+    }
+
     /** Set my rotor slots to the rotors named ROTORS from my set of
      *  available rotors (ROTORS[0] names the reflector).
      *  Initially, all rotors are set at their 0 setting. */
@@ -75,7 +129,7 @@ class Machine {
         }
 
         /* set the rotor in order. */
-        _arrayRotors.clear();
+        _atWorkRotors.clear();
         int i = 0;
         Rotor prevRotor = null;
         for(; i < _numRotors; i++){
@@ -88,11 +142,12 @@ class Machine {
                 throw new EnigmaException(String.format("This first rotor[%s]" +
                         " is not reflect type.",slRotors.get(i)));
             }
-            _arrayRotors.add(rotor);
+            _atWorkRotors.add(rotor);
 
             /* if has a pawl, then setup the left rotor */
             if(i >= _numRotors-_numPawls){
                 rotor.setLeftRotor(prevRotor);
+                rotor.setPawl();
             }
             prevRotor = rotor;
         }
@@ -117,8 +172,9 @@ class Machine {
                     "set %d rotors ringposition, but given %s", _numRotors - 1,
                     ringPositions));
         }
+        _ringPositions = ringPositions;
         for (int i = 0; i < ringPositions.length() ; i++) {
-            _arrayRotors.get(i + 1).setRingPosition(ringPositions.charAt(i));
+            _atWorkRotors.get(i + 1).setRingPosition(ringPositions.charAt(i));
         }
     }
 
@@ -131,7 +187,7 @@ class Machine {
                     "%d rotors, but given %s", _numRotors - 1, setting));
         }
         for (int i = 0; i < setting.length(); i++) {
-            _arrayRotors.get(i + 1).set(setting.charAt(i));
+            _atWorkRotors.get(i + 1).set(setting.charAt(i));
         }
     }
 
@@ -144,7 +200,7 @@ class Machine {
      *  index in the range 0..alphabet size - 1), after first advancing
      *  the machine. */
     int convert(int c) {
-        if(_arrayRotors.size() != _numRotors){
+        if(_atWorkRotors.size() != _numRotors){
             throw new EnigmaException("This machine has not any rotors in.");
         }
         if(!_alphabet.contains(_alphabet.toChar(c))){
@@ -154,19 +210,19 @@ class Machine {
         int r = _plugboard.permute(c);
 
         /* then, the rightmost rotor advance */
-        _arrayRotors.get(_numRotors - 1).advance();
+        _atWorkRotors.get(_numRotors - 1).advance();
 
         /* forward permutation from right to left */
         for (int i = _numRotors - 1 ; i > 0 ; i--) {
-            r = _arrayRotors.get(i).convertForward(r);
+            r = _atWorkRotors.get(i).convertForward(r);
         }
 
         /* reflect */
-        r = _arrayRotors.get(0).convertForward(r);
+        r = _atWorkRotors.get(0).convertForward(r);
 
         /* backward inversion from left to right */
         for(int i = 1 ; i < _numRotors; i++){
-            r = _arrayRotors.get(i).convertBackward(r);
+            r = _atWorkRotors.get(i).convertBackward(r);
         }
 
         /* finally through plugboard */
@@ -191,24 +247,27 @@ class Machine {
     }
 
     /** Common alphabet of my rotors. */
-    private final Alphabet _alphabet;
+    private  Alphabet _alphabet;
 
     /** store all supported rotors */
-    HashMap<String, Rotor> _allRotors;
+    private HashMap<String, Rotor> _allRotors;
 
     /** This machine has total rotors */
-    int _numRotors;
+    private int _numRotors;
 
     /** This machine has rotors(<=_numRotors-1) with pawls*/
-    int _numPawls;
+    private int _numPawls;
 
     /** This machine's config string, such as "* B Beta I II III AAAR"*/
-    String _configString;
+    private String _configString;
+
+    /** The ringPositions of rotors at work (except reflector) */
+    private String _ringPositions;
 
     /** This machine's plugboard */
-    Permutation _plugboard;
+    private Permutation _plugboard;
 
     /** The rotors list in order according to config string.
      * the first must be a reflector */
-    ArrayList<Rotor> _arrayRotors;
+    private ArrayList<Rotor> _atWorkRotors;
 }

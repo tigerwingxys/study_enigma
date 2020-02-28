@@ -3,11 +3,9 @@ package enigma;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
-
 import static enigma.EnigmaException.*;
 
 /** Enigma simulator.
@@ -101,23 +99,12 @@ public final class Main {
      *  file _config. */
     private Machine readConfig() {
         try {
-            String s = _config.nextLine();
-            _alphabet = new Alphabet(s);
-
-            int numRotors = _config.nextInt();
-            int numPawls = _config.nextInt();
-            /* ignore this line left content */
-            _config.nextLine();
-
-            /* process all input rotors config string, because of one config
-            * string could split to two lines, add to arrLines. */
-            ArrayList<Rotor> allRotors = new ArrayList<>();
             ArrayList<String> arrLines = new ArrayList<>();
             String prevLine = "";
             while (_config.hasNext()){
-                s = _config.nextLine().trim();
+                String s = _config.nextLine().trim();
 
-                if( s.startsWith("(") ){/* prevline is not end */
+                if( s.startsWith("(") ){/* prevLine is not end */
                     prevLine += " " + s;
                 }else {/* a new rotor config line */
                     if( !prevLine.isEmpty() ) {
@@ -130,47 +117,10 @@ public final class Main {
                 arrLines.add(prevLine);
             }
 
-            /* initialize every rotor according to config string */
-            for(String line: arrLines){
-                allRotors.add(readRotor(line));
-            }
-
-            /* initialize the machine */
-            return new Machine(_alphabet, numRotors, numPawls, allRotors);
+            return Machine.makeAMachine(arrLines);
 
         } catch (NoSuchElementException excp) {
             throw error("configuration file truncated");
-        }
-    }
-
-    /** Return a rotor, reading its description from _config. */
-    private Rotor readRotor(String line) {
-        try {
-            Scanner scanner = new Scanner(line);
-
-            String name = scanner.next();
-            String type = scanner.next();
-            String notches = "";
-            if( type.length() > 1){
-                notches = type.substring(1);
-            }
-            String permute = scanner.nextLine();
-            Permutation perm = new Permutation(permute, _alphabet);
-
-            Rotor rotor;
-            if( type.charAt(0) == Rotor.MOVING ){
-                rotor = new MovingRotor(name, perm, notches);
-            }else if(type.charAt(0) == Rotor.NOMOVING ){
-                rotor = new FixedRotor(name, perm);
-            }else if( type.charAt(0) == Rotor.REFLECTOR ){
-                rotor = new Reflector(name, perm);
-            }else {
-                throw new EnigmaException(String.format("type[%c] is " +
-                        "not correct.", type.charAt(0)));
-            }
-            return rotor;
-        } catch (NoSuchElementException excp) {
-            throw error("bad rotor description");
         }
     }
 
@@ -193,9 +143,6 @@ public final class Main {
         }
         _output.println();
     }
-
-    /** Alphabet used in this machine. */
-    private Alphabet _alphabet;
 
     /** Source of input messages. */
     private Scanner _input;
